@@ -1,0 +1,16 @@
+<table>
+  <tr>
+    <td>
+      <div>Producer Video</div>
+      <video #producerVideo autoplay controls playsinline style="height: 400px; width: 400px"></video>
+    </td>
+    <td>
+      <div>Consumer Video</div>
+      <video #consumerVideo autoplay controls playsinline style="height: 400px; width: 400px"></video>
+    </td>
+  </tr>
+  <tr>
+    <td><button (click)="showProducerVideo()">Show producer video</button></td>
+    <td><button (click)="showConsumerVideo()">Show consumer video</button></td>
+  </tr>
+</table>
