@@ -234,6 +234,9 @@ export class MediasoupService {
   public async deletePeer(consumer_id: string) {
     console.log('deletePeer');
 
+    this.consumersVideo.delete(consumer_id);
+    this.consumersAudio.delete(consumer_id);
+
     this.consumersVideoStream.delete(consumer_id);
     this.consumersAudioStream.delete(consumer_id);
   }
