@@ -12,6 +12,10 @@ export class TestComponent implements OnInit {
 
   @ViewChild('producerVideo', { static: false }) producerVideo: ElementRef;
   @ViewChild('consumerVideo', { static: false }) consumerVideo: ElementRef;
+  @ViewChild('consumerAudio', { static: false }) consumerAudio: ElementRef;
+
+  // tslint:disable-next-line: variable-name
+  private readonly user_id: string = 'aaa' + Math.random();
 
   constructor(
     private readonly logger: NGXLogger,
@@ -19,14 +23,29 @@ export class TestComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    await this.wssService.connect();
+    // window['comp'] = this;
+    await this.wssService.connect(this.user_id);
   }
 
   public showProducerVideo() {
-    this.producerVideo.nativeElement.srcObject = this.wssService.producerStream;
+    this.producerVideo.nativeElement.srcObject = this.wssService.mediasoup.producerVideoStream;
   }
 
   public showConsumerVideo() {
-    this.consumerVideo.nativeElement.srcObject = this.wssService.consumerStream;
+    const keys = Array.from(this.wssService.mediasoup.consumersVideoStream.keys());
+    this.consumerVideo.nativeElement.srcObject = this.wssService.mediasoup.consumersVideoStream.get(keys[0]);
+  }
+
+  public showConsumerAudio() {
+    const keys = Array.from(this.wssService.mediasoup.consumersAudioStream.keys());
+    this.consumerAudio.nativeElement.srcObject = this.wssService.mediasoup.consumersAudioStream.get(keys[0]);
+  }
+
+  public pauseProducerVideo() {
+    this.wssService.mediasoup.pauseProducerVideo();
+  }
+
+  public resumeProducerVideo() {
+    this.wssService.mediasoup.resumeProducerVideo();
   }
 }

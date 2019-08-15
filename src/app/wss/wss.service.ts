@@ -4,35 +4,28 @@ import { NGXLogger } from 'ngx-logger';
 import { connect } from 'socket.io-client';
 
 import { environment } from '../../environments/environment';
-
-import * as mediasoupClient from 'mediasoup-client';
-import { IDevice } from 'mediasoup-client/Device';
-import { ITransport } from 'mediasoup-client/Transport';
-import { IProducer } from 'mediasoup-client/Producer';
-import { IConsumer } from 'mediasoup-client/Consumer';
+import { MediasoupService } from './wss.mediasoup';
 
 type IOSocket = SocketIOClient.Socket & { request: (ioEvent: string, data?: any) => Promise<any> };
 
 @Injectable()
 export class WssService {
   private socket: IOSocket;
-  private mediasoupDevice: IDevice;
 
-  public producer: IProducer;
-  public producerTransport: ITransport;
-  public producerStream: MediaStream;
-
-  public consumer: IConsumer;
-  public consumerTransport: ITransport;
-  public consumerStream: MediaStream;
-
+  public mediasoup: MediasoupService;
 
   constructor(
     private readonly logger: NGXLogger
   ) {}
 
-  public connect() {
-    this.socket = connect(environment.wss_url) as IOSocket;
+  // tslint:disable-next-line: variable-name
+  public connect(current_user_id: string) {
+    this.socket = connect(environment.wss_url, {
+      query: {
+        session_id: 1,
+        user_id: current_user_id,
+      }
+    }) as IOSocket;
 
     this.socket.request = (ioEvent: string, data: object = {}) => {
       return new Promise((resolve) => {
@@ -40,165 +33,33 @@ export class WssService {
       });
     };
 
+    this.mediasoup = new MediasoupService(this.socket);
+
     this.socket.on('connect', async () => {
-      this.logger.info('WSS Connect');
-
-      const data: RTCRtpCapabilities = await this.socket.request('getRouterRtpCapabilities');
-
-      this.mediasoupDevice = new mediasoupClient.Device({});
-
-      await this.mediasoupDevice.load({
-        routerRtpCapabilities: data,
-      });
-
-      await this.createSendWebRTCTransport();
-
-      await this.createRecvWebRTCTransport();
+      await this.mediasoup.createMediasoupDevice();
+      await this.mediasoup.createProducerTransport();
+      await this.mediasoup.createConsumerTransport();
+      await this.mediasoup.syncPeers();
     });
 
-    this.socket.on('disconnect', () => {
-      this.socket.close();
-    });
-  }
-
-  private async createSendWebRTCTransport() {
-    const data = await this.socket.request('createProducerTransport', {
-      forceTcp: false,
-      rtpCapabilities: this.mediasoupDevice.rtpCapabilities,
+    this.socket.on('connectMember', async (msg: { user_id: string }) => {
+      // pass
     });
 
-    this.producerTransport = this.mediasoupDevice.createSendTransport(data);
+    this.socket.on('disconnectMember', async (msg: { user_id: string }) => {
+      await this.mediasoup.deletePeer(msg.user_id);
+    });
 
-    this.producerTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-      this.logger.info('Produce Producer Connect');
-
-      try {
-        const cpd = await this.socket.request('connectProducerTransport', { dtlsParameters });
-
-        callback(cpd);
-      } catch (err) {
-        errback(err);
+    this.socket.on('newPeer', async (msg: { user_id: string, kind: 'audio' | 'video' }) => {
+      if (msg.kind === 'video') {
+        await this.mediasoup.consumeVideo(msg.user_id);
+      } else if (msg.kind === 'audio') {
+        await this.mediasoup.consumeAudio(msg.user_id);
       }
     });
 
-    this.producerTransport.on('produce', async ({ kind, rtpParameters }, callback, errback) => {
-      this.logger.info('Produce');
-
-      try {
-        const { id } = await this.socket.request('produce', {
-          producerTransportId: this.producerTransport.id,
-          kind,
-          rtpParameters,
-        });
-
-        callback({ id });
-      } catch (err) {
-        errback(err);
-      }
+    this.socket.on('message', async (_msg: object) => {
+      // pass
     });
-
-    this.producerTransport.on('connectionstatechange', (state) => {
-      this.logger.info('Produce Transport ConnectionsChange');
-
-      switch (state) {
-        case 'connecting':
-          this.logger.info('connecting...');
-          break;
-
-        case 'connected':
-          this.logger.info('connected');
-          break;
-
-        case 'failed':
-          this.producerTransport.close();
-          this.logger.info('failed');
-          break;
-
-        default: break;
-      }
-    });
-
-    this.producer = await this.produce(this.producerTransport);
-  }
-
-  private async createRecvWebRTCTransport() {
-    const data = await this.socket.request('createConsumerTransport', {
-      forceTcp: false,
-    });
-
-    this.consumerTransport = this.mediasoupDevice.createRecvTransport(data);
-
-    this.consumerTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
-      this.socket.request('connectConsumerTransport', {
-        consumerTransportId: this.consumerTransport.id,
-        dtlsParameters
-      })
-        .then(callback)
-        .catch(errback);
-    });
-
-    this.consumerTransport.on('connectionstatechange', (state) => {
-      switch (state) {
-        case 'connecting':
-          this.logger.info('connecting...');
-          break;
-
-        case 'connected':
-          this.logger.info('connected');
-          break;
-
-        case 'failed':
-          this.consumerTransport.close();
-          this.logger.info('failed');
-          break;
-
-        default: break;
-      }
-    });
-
-    this.consumer = await this.consume(this.consumerTransport);
-
-    await this.socket.request('resume');
-  }
-
-  private async produce(transport: ITransport) {
-    if (!this.mediasoupDevice.canProduce('video')) {
-      return;
-    }
-
-    this.producerStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    const track = this.producerStream.getVideoTracks()[0];
-
-    const params = { track };
-
-    const producer = await transport.produce(params);
-
-    return producer;
-  }
-
-  private async consume(transport: ITransport) {
-    const { rtpCapabilities } = this.mediasoupDevice;
-
-    const data = await this.socket.request('consume', { rtpCapabilities });
-
-    const {
-      producerId,
-      id,
-      kind,
-      rtpParameters,
-    } = data;
-
-    const consumer = await transport.consume({
-      id,
-      producerId,
-      kind,
-      rtpParameters,
-    });
-
-    this.consumerStream = new MediaStream();
-
-    this.consumerStream.addTrack(consumer.track);
-
-    return consumer;
   }
 }

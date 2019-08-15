@@ -8,9 +8,22 @@
       <div>Consumer Video</div>
       <video #consumerVideo autoplay controls playsinline style="height: 400px; width: 400px"></video>
     </td>
+    <td>
+      <div>Consumer Audio</div>
+      <audio #consumerAudio autoplay controls playsinline style="height: 400px; width: 400px"></audio>
+    </td>
   </tr>
   <tr>
     <td><button (click)="showProducerVideo()">Show producer video</button></td>
     <td><button (click)="showConsumerVideo()">Show consumer video</button></td>
+    <td><button (click)="showConsumerAudio()">Show consumer audio</button></td>
+  </tr>
+  <tr>
+    <td>
+      <button (click)="pauseProducerVideo()">Pause producer video</button>
+      <button (click)="resumeProducerVideo()">Resume producer video</button>
+    </td>
+    <td></td>
+    <td></td>
   </tr>
 </table>
