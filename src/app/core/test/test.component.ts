@@ -23,8 +23,7 @@ export class TestComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    // window['comp'] = this;
-    await this.wssService.connect(this.user_id);
+    this.wssService.connect(this.user_id);
   }
 
   public showProducerVideo() {
@@ -42,10 +41,18 @@ export class TestComponent implements OnInit {
   }
 
   public pauseProducerVideo() {
-    this.wssService.mediasoup.pauseProducerVideo();
+    this.wssService.mediasoup.producerVideoPause();
   }
 
   public resumeProducerVideo() {
-    this.wssService.mediasoup.resumeProducerVideo();
+    this.wssService.mediasoup.producerVideoResume();
+  }
+
+  public pauseProducerAudio() {
+    this.wssService.mediasoup.producerAudioPause();
+  }
+
+  public resumeProducerAudio() {
+    this.wssService.mediasoup.producerAudioResume();
   }
 }

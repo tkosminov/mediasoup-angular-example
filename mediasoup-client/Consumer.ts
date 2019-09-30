@@ -61,7 +61,7 @@ export interface IConsumer {
    *
    * @returns {String}
    */
-  kind: string;
+  kind: 'audio' | 'video';
 
   /**
    * The associated track.
@@ -91,17 +91,19 @@ export interface IConsumer {
    */
   appData: object;
 
+  on(type: any, listener: (...params: any) => Promise<void> | void): Promise<void> | void;
+
   /**
    * Closes the Consumer.
    */
-  close();
+  close(): void;
 
-  /**
-   * Transport was closed.
-   *
-   * @private
-   */
-  transportClosed();
+  // /**
+  //  * Transport was closed.
+  //  *
+  //  * @private
+  //  */
+  // transportClosed(): void;
 
   /**
    * Get associated RTCRtpReceiver stats.

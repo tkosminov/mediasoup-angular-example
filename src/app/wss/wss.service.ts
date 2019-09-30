@@ -36,30 +36,17 @@ export class WssService {
     this.mediasoup = new MediasoupService(this.socket);
 
     this.socket.on('connect', async () => {
-      await this.mediasoup.createMediasoupDevice();
-      await this.mediasoup.createProducerTransport();
-      await this.mediasoup.createConsumerTransport();
-      await this.mediasoup.syncPeers();
+      await this.mediasoup.load();
+      await this.mediasoup.producerVideoStart();
+      await this.mediasoup.producerAudioStart();
     });
 
-    this.socket.on('connectMember', async (msg: { user_id: string }) => {
+    this.socket.on('mediaClientConnected', async (msg: { user_id: string }) => {
       // pass
     });
 
-    this.socket.on('disconnectMember', async (msg: { user_id: string }) => {
-      await this.mediasoup.deletePeer(msg.user_id);
-    });
-
-    this.socket.on('newPeer', async (msg: { user_id: string, kind: 'audio' | 'video' }) => {
-      if (msg.kind === 'video') {
-        await this.mediasoup.consumeVideo(msg.user_id);
-      } else if (msg.kind === 'audio') {
-        await this.mediasoup.consumeAudio(msg.user_id);
-      }
-    });
-
-    this.socket.on('message', async (_msg: object) => {
-      // pass
+    this.socket.on('mediaClientDisconnect', async (msg: { user_id: string }) => {
+      // await this.mediasoup.deletePeer(msg.user_id);
     });
   }
 }

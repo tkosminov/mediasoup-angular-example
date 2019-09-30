@@ -54,7 +54,7 @@ export interface IProducer {
    *
    * @returns {String}
    */
-  kind: string;
+  kind: 'audio' | 'video';
 
   /**
    * The associated track.
@@ -91,10 +91,12 @@ export interface IProducer {
    */
   appData: object;
 
+  on(type: any, listener: (...params: any) => Promise<void> | void): Promise<void> | void;
+
   /**
    * Closes the Producer.
    */
-  close();
+  close(): void;
 
   // /**
   //  * Transport was closed.
@@ -115,12 +117,12 @@ export interface IProducer {
   /**
    * Pauses sending media.
    */
-  pause();
+  pause(): void;
 
   /**
    * Resumes sending media.
    */
-  resume();
+  resume(): void;
 
   /**
    * Replaces the current track with a new one.

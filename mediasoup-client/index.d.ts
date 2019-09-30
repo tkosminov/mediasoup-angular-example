@@ -1,4 +1,4 @@
-import { IDevice } from "./Device";
+import { IDevice } from './Device';
 
 declare module 'mediasoup-client' {
 	export const Device: IDevice;

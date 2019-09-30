@@ -102,10 +102,10 @@ export interface IDevice {
     iceParameters: RTCIceParameters;
     iceCandidates: RTCIceCandidate[];
     dtlsParameters: RTCDtlsParameters;
-    sctpParameters: object;
-    iceServers: RTCIceServer[];
-    iceTransportPolicy: RTCIceTransportPolicy;
-    proprietaryConstraints: object;
+    sctpParameters?: object;
+    iceServers?: RTCIceServer[];
+    iceTransportPolicy?: RTCIceTransportPolicy;
+    proprietaryConstraints?: object;
     appData?: object;
   }): ITransport;
 
@@ -142,10 +142,10 @@ export interface IDevice {
     iceParameters: RTCIceParameters;
     iceCandidates: RTCIceCandidate[];
     dtlsParameters: RTCDtlsParameters;
-    sctpParameters: object;
-    iceServers: RTCIceServer[];
-    iceTransportPolicy: RTCIceTransportPolicy;
-    proprietaryConstraints: object;
+    sctpParameters?: object;
+    iceServers?: RTCIceServer[];
+    iceTransportPolicy?: RTCIceTransportPolicy;
+    proprietaryConstraints?: object;
     appData?: object;
   }): ITransport;
 }
