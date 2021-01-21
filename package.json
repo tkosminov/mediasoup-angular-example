@@ -22,7 +22,7 @@
     "mediasoup-client": "^3.2.6",
     "ngx-logger": "^4.0.5",
     "rxjs": "~6.4.0",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.4.0",
     "socket.io-promise": "^1.1.1",
     "tern": "^0.24.1",
     "tslib": "^1.10.0",
